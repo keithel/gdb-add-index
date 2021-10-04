@@ -1,0 +1,34 @@
+#!/bin/bash
+
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+function usage_exit {
+    echo "Usage: $0 <directory-containing-binaries>..."
+    echo
+    echo "  Set TOOLCHAIN_PREFIX to use a non-default set of binutils."
+    exit 1
+}
+
+if (($# <= 0)); then
+    echo "no directory to index provided." >&2
+    echo "aborting." >&2
+    exit 1
+elif (($# > 1)); then
+    echo "too many arguments." >&2
+    echo "aborting." >&2
+    exit 1
+elif [ ! -d "$1" ]; then
+    echo "$1 is not a directory." >&2
+    echo "aborting." >&2
+    exit 1
+else
+    dir_to_index=("$1")
+fi
+
+
+export myodirs=$(find "$dir_to_index" -name "*.o" | sort | sed -e 's/^\(.*\)\/.*/\1/' | uniq)
+for odir in $myodirs; do
+    files=($odir/*.o)
+    echo "Indexing directory $odir"  # , files: ${files[@]}"
+    ${SCRIPT_DIR}/gdb-add-index ${files[@]}
+done
